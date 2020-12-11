@@ -33,15 +33,17 @@ RECORD=`echo $DNS_RECORDS_RESPONSE | jq ".[]  | select(.hostname == \"$HOSTNAME\
 RECORD_VALUE=`echo $RECORD | jq ".value" --raw-output`
 echo "Current $HOSTNAME value is $RECORD_VALUE"
 
-if [ $RECORD_VALUE != $EXTERNAL_IP ]; then
-  RECORD_ID=`echo $RECORD | jq ".id" --raw-output`
+if [ "$RECORD_VALUE" != "$EXTERNAL_IP" ]; then
 
-  echo "Deleting current entry for $HOSTNAME"
-  DELETE_RESPONSE_CODE=`curl -X DELETE -s -w "%{response_code}" "https://api.netlify.com/api/v1/dns_zones/$ZONE_ID/dns_records/$RECORD_ID?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
+  if [ "$RECORD_VALUE" != ""]; then
+    echo "Deleting current entry for $HOSTNAME"
+    RECORD_ID=`echo $RECORD | jq ".id" --raw-output`
+    DELETE_RESPONSE_CODE=`curl -X DELETE -s -w "%{response_code}" "https://api.netlify.com/api/v1/dns_zones/$ZONE_ID/dns_records/$RECORD_ID?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
 
-  if [ $DELETE_RESPONSE_CODE != 204 ]; then
-    echo "There was a problem deleting the existing $HOSTNAME entry, response code was $DELETE_RESPONSE_CODE"
-    exit
+    if [ $DELETE_RESPONSE_CODE != 204 ]; then
+      echo "There was a problem deleting the existing $HOSTNAME entry, response code was $DELETE_RESPONSE_CODE"
+      exit
+    fi
   fi
 
   echo "Creating new entry for $HOSTNAME with value $EXTERNAL_IP"
