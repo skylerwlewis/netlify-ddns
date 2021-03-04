@@ -3,6 +3,8 @@
 # This is a script to update a Netlify subdomain A record with the current external IP.
 # The example below would update the local.example.com A record to the current external IP with a TTL of 5 minutes.
 #
+# Repo: https://github.com/skylerwlewis/netlify-ddns
+#
 # Usage:
 # netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL>
 #
