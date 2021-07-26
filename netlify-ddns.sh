@@ -1,7 +1,10 @@
 #!/bin/bash
 #
-# This is a script to update a Netlify subdomain A record with the current external IP.
+# This is a Bash script to update a Netlify subdomain A record with the current external IP.
 # The example below would update the local.example.com A record to the current external IP with a TTL of 5 minutes.
+#
+# Repo: https://github.com/skylerwlewis/netlify-ddns
+# Gist: https://gist.github.com/skylerwlewis/ba052db5fe26424255674931d43fc030
 #
 # Usage:
 # netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL>
