@@ -35,9 +35,10 @@ RECORD=`echo $DNS_RECORDS_RESPONSE | jq ".[]  | select(.hostname == \"$HOSTNAME\
 RECORD_VALUE=`echo $RECORD | jq ".value" --raw-output`
 echo "Current $HOSTNAME value is $RECORD_VALUE"
 
-if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]]; then
+IP_PATTERN='^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]] && [[ $EXTERNAL_IP =~ $IP_PATTERN ]]; then
 
-  if [[ "$RECORD_VALUE" != "" ]]; then
+  if [[ "$RECORD_VALUE" != "" ]] && [[ $RECORD_VALUE =~ $IP_PATTERN ]]; then
     echo "Deleting current entry for $HOSTNAME"
     RECORD_ID=`echo $RECORD | jq ".id" --raw-output`
     DELETE_RESPONSE_CODE=`curl -X DELETE -s -w "%{response_code}" "$NETLIFY_API/dns_zones/$ZONE_ID/dns_records/$RECORD_ID?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
