@@ -34,12 +34,28 @@ if [[ ! $EXTERNAL_IP =~ $IP_PATTERN ]]; then
 fi
 echo "Current external IP is $EXTERNAL_IP"
 
-HOSTNAME="$SUBDOMAIN.$DOMAIN"
+DNS_ZONES_RESPONSE=`curl -s -w "\n%{http_code}" "$NETLIFY_API/dns_zones?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
+DNS_ZONES_RESPONSE_CODE=$(tail -n1 <<< "$DNS_ZONES_RESPONSE")
+DNS_ZONES_CONTENT=$(sed '$ d' <<< "$DNS_ZONES_RESPONSE")
+if [[ $DNS_ZONES_RESPONSE_CODE != 200 ]]; then
+  echo "There was a problem retrieving the DNS zones, response code was $DNS_ZONES_RESPONSE_CODE, response body was:"
+  echo "$DNS_ZONES_CONTENT"
+  exit
+fi
 
-DNS_ZONES_RESPONSE=`curl -s "$NETLIFY_API/dns_zones?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
-ZONE_ID=`echo $DNS_ZONES_RESPONSE | jq ".[]  | select(.name == \"$DOMAIN\") | .id" --raw-output`
-DNS_RECORDS_RESPONSE=`curl -s "$NETLIFY_API/dns_zones/$ZONE_ID/dns_records?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
-RECORD=`echo $DNS_RECORDS_RESPONSE | jq ".[]  | select(.hostname == \"$HOSTNAME\")" --raw-output`
+ZONE_ID=`echo $DNS_ZONES_CONTENT | jq ".[]  | select(.name == \"$DOMAIN\") | .id" --raw-output`
+
+DNS_RECORDS_RESPONSE=`curl -s -w "\n%{http_code}" "$NETLIFY_API/dns_zones/$ZONE_ID/dns_records?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
+DNS_RECORDS_RESPONSE_CODE=$(tail -n1 <<< "$DNS_RECORDS_RESPONSE")
+DNS_RECORDS_CONTENT=$(sed '$ d' <<< "$DNS_RECORDS_RESPONSE")
+if [[ $DNS_RECORDS_RESPONSE_CODE != 200 ]]; then
+  echo "There was a problem retrieving the DNS records for zone \"$ZONE_ID\", response code was $DNS_RECORDS_RESPONSE_CODE, response body was:"
+  echo "$DNS_RECORDS_CONTENT"
+  exit
+fi
+
+HOSTNAME="$SUBDOMAIN.$DOMAIN"
+RECORD=`echo $DNS_RECORDS_CONTENT | jq ".[]  | select(.hostname == \"$HOSTNAME\")" --raw-output`
 RECORD_VALUE=`echo $RECORD | jq ".value" --raw-output`
 echo "Current $HOSTNAME value is $RECORD_VALUE"
 
@@ -48,7 +64,7 @@ if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]]; then
   if [[ $RECORD_VALUE =~ $IP_PATTERN ]]; then
     echo "Deleting current entry for $HOSTNAME"
     RECORD_ID=`echo $RECORD | jq ".id" --raw-output`
-    DELETE_RESPONSE_CODE=`curl -X DELETE -s -w "%{response_code}" "$NETLIFY_API/dns_zones/$ZONE_ID/dns_records/$RECORD_ID?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
+    DELETE_RESPONSE_CODE=`curl -X DELETE -s -w "%{http_code}" "$NETLIFY_API/dns_zones/$ZONE_ID/dns_records/$RECORD_ID?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
 
     if [[ $DELETE_RESPONSE_CODE != 204 ]]; then
       echo "There was a problem deleting the existing $HOSTNAME entry, response code was $DELETE_RESPONSE_CODE"
@@ -65,15 +81,12 @@ if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]]; then
       "ttl": $ttl|tonumber
   }'`
 
-  CREATE_RESPONSE=`curl -s --data "$CREATE_BODY" "$NETLIFY_API/dns_zones/$ZONE_ID/dns_records?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
-
-  NEW_RECORD_TYPE=`echo $CREATE_RESPONSE | jq ".type" --raw-output`
-  NEW_RECORD_HOSTNAME=`echo $CREATE_RESPONSE | jq ".hostname" --raw-output`
-  NEW_RECORD_VALUE=`echo $CREATE_RESPONSE | jq ".value" --raw-output`
-  NEW_RECORD_TTL=`echo $CREATE_RESPONSE | jq ".ttl" --raw-output`
-
-  if [[ $NEW_RECORD_TYPE != "A" ]] || [[ $NEW_RECORD_HOSTNAME != $HOSTNAME ]] || [[ $NEW_RECORD_VALUE != $EXTERNAL_IP ]] || [[ $NEW_RECORD_TTL != $TTL ]]; then
-    echo "There was a problem creating the new entry, some values did not match"
+  CREATE_RESPONSE=`curl -s -w "\n%{http_code}" --data "$CREATE_BODY" "$NETLIFY_API/dns_zones/$ZONE_ID/dns_records?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
+  CREATE_RESPONSE_CODE=$(tail -n1 <<< "$CREATE_RESPONSE")
+  CREATE_CONTENT=$(sed '$ d' <<< "$CREATE_RESPONSE")
+  if [[ $CREATE_RESPONSE_CODE != 201 ]]; then
+    echo "There was a problem creating the new entry, response code was $CREATE_RESPONSE_CODE, response body was:"
+    echo "$CREATE_CONTENT"
     exit
   fi
 fi
