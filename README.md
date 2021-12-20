@@ -2,6 +2,8 @@
 
 This is a Bash script to update a [Netlify][netlify] subdomain A record with the current external IP.
 
+I also created [a Gist](https://gist.github.com/skylerwlewis/ba052db5fe26424255674931d43fc030) for this script for  a [blog post](https://blog.skylerlewis.io/2020/12/diy-dynamic-dns-using-netlify-api.html).
+
 ---
 ## Usage
 `netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL>`
