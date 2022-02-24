@@ -32,7 +32,6 @@ if [[ ! $EXTERNAL_IP =~ $IP_PATTERN ]]; then
   echo "There was a problem resolving the external IP, response was \"$EXTERNAL_IP\""
   exit
 fi
-echo "Current external IP is $EXTERNAL_IP"
 
 DNS_ZONES_RESPONSE=`curl -s -w "\n%{http_code}" "$NETLIFY_API/dns_zones?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
 DNS_ZONES_RESPONSE_CODE=$(tail -n1 <<< "$DNS_ZONES_RESPONSE")
@@ -57,9 +56,10 @@ fi
 HOSTNAME="$SUBDOMAIN.$DOMAIN"
 RECORD=`echo $DNS_RECORDS_CONTENT | jq ".[]  | select(.hostname == \"$HOSTNAME\")" --raw-output`
 RECORD_VALUE=`echo $RECORD | jq ".value" --raw-output`
-echo "Current $HOSTNAME value is $RECORD_VALUE"
 
 if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]]; then
+
+  echo "Current external IP is $EXTERNAL_IP, current $HOSTNAME value is $RECORD_VALUE"
 
   if [[ $RECORD_VALUE =~ $IP_PATTERN ]]; then
     echo "Deleting current entry for $HOSTNAME"
