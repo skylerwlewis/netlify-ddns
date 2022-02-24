@@ -33,6 +33,14 @@ if [[ ! $EXTERNAL_IP =~ $IP_PATTERN ]]; then
   exit
 fi
 
+HOSTNAME="$SUBDOMAIN.$DOMAIN"
+CACHED_IP_FILE="cached-ip-$HOSTNAME.txt"
+if [[ -f "$CACHED_IP_FILE" ]]; then
+    if [[ $(< "$CACHED_IP_FILE") = "$EXTERNAL_IP" ]]; then
+        exit
+    fi
+fi
+
 DNS_ZONES_RESPONSE=`curl -s -w "\n%{http_code}" "$NETLIFY_API/dns_zones?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
 DNS_ZONES_RESPONSE_CODE=$(tail -n1 <<< "$DNS_ZONES_RESPONSE")
 DNS_ZONES_CONTENT=$(sed '$ d' <<< "$DNS_ZONES_RESPONSE")
@@ -53,9 +61,10 @@ if [[ $DNS_RECORDS_RESPONSE_CODE != 200 ]]; then
   exit
 fi
 
-HOSTNAME="$SUBDOMAIN.$DOMAIN"
 RECORD=`echo $DNS_RECORDS_CONTENT | jq ".[]  | select(.hostname == \"$HOSTNAME\")" --raw-output`
 RECORD_VALUE=`echo $RECORD | jq ".value" --raw-output`
+
+echo "$RECORD_VALUE" > "$CACHED_IP_FILE"
 
 if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]]; then
 
