@@ -1,7 +1,6 @@
 #!/bin/bash
 #
 # This is a Bash script to update a Netlify subdomain A record with the current external IP.
-# The example below would update the local.example.com A record to the current external IP with a TTL of 5 minutes.
 #
 # Repo: https://github.com/skylerwlewis/netlify-ddns
 # Gist: https://gist.github.com/skylerwlewis/ba052db5fe26424255674931d43fc030
@@ -9,14 +8,17 @@
 # Usage:
 # netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL> [<CACHED_IP_FILE>]
 #
+# The example below would update the local.example.com A record to the current external IP with a TTL of 5 minutes.
+# The last parameter for the script is optional and is used to cache the Netlify IP to reduce API calls.
+#
 # Example:
 # netlify-ddns.sh aCcEsStOKeN example.com local 300 /home/johnsmith/cached-ip-file.txt
 #
 if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
-    echo "Wrong number of parameters passed"
-    echo "Usage:"
-    echo "$0 <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL> [<CACHED_IP_FILE>]"
-    exit
+  echo "Wrong number of parameters passed"
+  echo "Usage:"
+  echo "$0 <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL> [<CACHED_IP_FILE>]"
+  exit
 fi
 
 ACCESS_TOKEN="$1"
@@ -24,8 +26,8 @@ DOMAIN="$2"
 SUBDOMAIN="$3"
 TTL="$4"
 
-if [ "$#" -eq 5 ]; then
-    CACHED_IP_FILE="$5"
+if [ "$#" -ge 5 ]; then
+  CACHED_IP_FILE="$5"
 fi
 
 NETLIFY_API="https://api.netlify.com/api/v1"
@@ -38,11 +40,11 @@ if [[ ! $EXTERNAL_IP =~ $IP_PATTERN ]]; then
 fi
 
 if [ -n "$CACHED_IP_FILE" ]; then 
-    if [[ -f "$CACHED_IP_FILE" ]]; then
-        if [[ $(< "$CACHED_IP_FILE") = "$EXTERNAL_IP" ]]; then
-            exit
-        fi
+  if [[ -f "$CACHED_IP_FILE" ]]; then
+    if [[ $(< "$CACHED_IP_FILE") = "$EXTERNAL_IP" ]]; then
+      exit
     fi
+  fi
 fi
 
 DNS_ZONES_RESPONSE=`curl -s -w "\n%{http_code}" "$NETLIFY_API/dns_zones?access_token=$ACCESS_TOKEN" --header "Content-Type:application/json"`
@@ -70,7 +72,7 @@ RECORD=`echo $DNS_RECORDS_CONTENT | jq ".[]  | select(.hostname == \"$HOSTNAME\"
 RECORD_VALUE=`echo $RECORD | jq ".value" --raw-output`
 
 if [ -n "$CACHED_IP_FILE" ]; then 
-    echo "$RECORD_VALUE" > "$CACHED_IP_FILE"
+  echo "$RECORD_VALUE" > "$CACHED_IP_FILE"
 fi
 
 if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]]; then
