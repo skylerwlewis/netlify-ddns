@@ -24,6 +24,10 @@ DOMAIN="$2"
 SUBDOMAIN="$3"
 TTL="$4"
 
+if [ "$#" -eq 5 ]; then
+    CACHED_IP_FILE="$5"
+fi
+
 NETLIFY_API="https://api.netlify.com/api/v1"
 IP_PATTERN='^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
 
@@ -33,8 +37,7 @@ if [[ ! $EXTERNAL_IP =~ $IP_PATTERN ]]; then
   exit
 fi
 
-if [ "$#" -eq 5 ]; then
-    CACHED_IP_FILE="$5"
+if [ -n "$CACHED_IP_FILE" ]; then 
     if [[ -f "$CACHED_IP_FILE" ]]; then
         if [[ $(< "$CACHED_IP_FILE") = "$EXTERNAL_IP" ]]; then
             exit
