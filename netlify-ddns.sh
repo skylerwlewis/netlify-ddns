@@ -7,15 +7,15 @@
 # Gist: https://gist.github.com/skylerwlewis/ba052db5fe26424255674931d43fc030
 #
 # Usage:
-# netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL>
+# netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL> [<CACHED_IP_FILE>]
 #
 # Example:
-# netlify-ddns.sh aCcEsStOKeN example.com local 300
+# netlify-ddns.sh aCcEsStOKeN example.com local 300 /home/johnsmith/cached-ip-file.txt
 #
-if [ "$#" -ne 4 ]; then
+if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
     echo "Wrong number of parameters passed"
     echo "Usage:"
-    echo "$0 <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL>"
+    echo "$0 <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL> [<CACHED_IP_FILE>]"
     exit
 fi
 
@@ -33,11 +33,12 @@ if [[ ! $EXTERNAL_IP =~ $IP_PATTERN ]]; then
   exit
 fi
 
-HOSTNAME="$SUBDOMAIN.$DOMAIN"
-CACHED_IP_FILE="cached-ip-$HOSTNAME.txt"
-if [[ -f "$CACHED_IP_FILE" ]]; then
-    if [[ $(< "$CACHED_IP_FILE") = "$EXTERNAL_IP" ]]; then
-        exit
+if [ "$#" -eq 5 ]; then
+    CACHED_IP_FILE="$5"
+    if [[ -f "$CACHED_IP_FILE" ]]; then
+        if [[ $(< "$CACHED_IP_FILE") = "$EXTERNAL_IP" ]]; then
+            exit
+        fi
     fi
 fi
 
@@ -61,10 +62,13 @@ if [[ $DNS_RECORDS_RESPONSE_CODE != 200 ]]; then
   exit
 fi
 
+HOSTNAME="$SUBDOMAIN.$DOMAIN"
 RECORD=`echo $DNS_RECORDS_CONTENT | jq ".[]  | select(.hostname == \"$HOSTNAME\")" --raw-output`
 RECORD_VALUE=`echo $RECORD | jq ".value" --raw-output`
 
-echo "$RECORD_VALUE" > "$CACHED_IP_FILE"
+if [ -n "$CACHED_IP_FILE" ]; then 
+    echo "$RECORD_VALUE" > "$CACHED_IP_FILE"
+fi
 
 if [[ "$RECORD_VALUE" != "$EXTERNAL_IP" ]]; then
 
