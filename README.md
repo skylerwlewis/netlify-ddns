@@ -6,11 +6,12 @@ I also created [a Gist](https://gist.github.com/skylerwlewis/ba052db5fe264242556
 
 ---
 ## Usage
-`netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL>`
+`netlify-ddns.sh <ACCESS_TOKEN> <DOMAIN> <SUBDOMAIN> <TTL> [<CACHED_IP_FILE>]`
 
 ## Example
 The example below would update the local.example.com A record to the current external IP with a TTL of 5 minutes.
-`netlify-ddns.sh aCcEsStOKeN example.com local 300`
+The last parameter for the script is optional and is used to cache the Netlify IP to reduce API calls.
+`netlify-ddns.sh aCcEsStOKeN example.com local 300 /home/johnsmith/cached-ip-file.txt`
 
 ---
 ### Prerequisites
