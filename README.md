@@ -22,7 +22,7 @@ The last parameter for the script is optional and is used to cache the Netlify I
 - [lukehsiao/netlify-ddns-rs] for a similar client written in [Rust][rust].
 - [oscartbeaumont/netlify-dynamic-dns] for a similar client written in [Go][go].
 - [lytedev/netlify-ddns] for another similar shell script version.
-- [woshichenghaibo/Netlify-DDNS] for 2 versions of this Bash script, including one that supports IPv6.
+- [woshichenghaibo/Netlify-DDNS] for 2 versions of this Bash script, including one that supports IPv6 (with AAAA records).
 
 [netlify]: https://www.netlify.com/docs/dns/
 [rust]: https://rust-lang.org/
