@@ -30,3 +30,4 @@ The last parameter for the script is optional and is used to cache the Netlify I
 [lytedev/netlify-ddns]: https://github.com/lytedev/netlify-ddns
 [lukehsiao/netlify-ddns-rs]: https://github.com/lukehsiao/netlify-ddns-rs
 [oscartbeaumont/netlify-dynamic-dns]: https://github.com/oscartbeaumont/netlify-dynamic-dns
+[woshichenghaibo/Netlify-DDNS]: https://github.com/woshichenghaibo/Netlify-DDNS
